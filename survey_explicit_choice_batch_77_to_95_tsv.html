@@ -1,0 +1,1222 @@
+
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <title>Translation Acceptance Survey - Batch 5 (77-95)</title>
+            <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+            <style>
+                /* CSS Styles (omitted for brevity, assume the previous styles) */
+                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: #f0f2f5; }
+                .segment-container { 
+                    background: white; padding: 30px; border-radius: 12px; 
+                    box-shadow: 0 6px 15px rgba(0,0,0,0.15); 
+                    margin-bottom: 25px; border-left: 6px solid #007BFF;
+                }
+                h2 { color: #007BFF; margin-top: 0; }
+                .source-text { font-size: 1.1em; padding: 15px; margin-bottom: 15px; background-color: #fff8e1; border: 1px solid #ffecb3; border-radius: 8px; }
+                .reference-text { font-style: italic; color: #555; padding: 10px 15px; margin-bottom: 25px; border-left: 3px solid #ccc; }
+                .model-translations-group { border: 1px solid #ddd; padding: 20px; border-radius: 8px; background-color: #f9f9f9; }
+                .translation-option { display: block; margin: 12px 0; padding: 12px 15px; border: 1px solid #e0e0e0; border-radius: 6px; cursor: pointer; transition: background-color 0.2s; }
+                .translation-option:hover { background-color: #e9f0ff; }
+                .translation-option input[type="radio"] { margin-right: 12px; } 
+                .translation-option strong { font-weight: 600; color: #007BFF; }
+                .special-option { font-weight: bold; background-color: #ffe5cc; border-color: #ffcc99; }
+                .segment-nav { text-align: right; margin-top: 25px; }
+                .segment-nav button { padding: 10px 20px; margin-left: 10px; border: none; border-radius: 6px; font-size: 1em; cursor: pointer; transition: background-color 0.2s; }
+                .segment-nav button[onclick*="nextSegment"] { background-color: #28a745; color: white; }
+                .segment-nav button[onclick*="prevSegment"] { background-color: #6c757d; color: white; }
+                .segment-nav button:disabled { background-color: #ccc; cursor: not-allowed; }
+                .results-area { margin-top: 30px; padding: 25px; background-color: #d4edda; border-radius: 8px; display: none; }
+                #results-output { width: 100%; height: 300px; padding: 10px; border: 1px solid #c3e6cb; border-radius: 4px; resize: none; }
+                .hidden { display: none; }
+            </style>
+
+            <script>
+                // --- JAVASCRIPT LOGIC ---
+                const TOTAL_SEGMENTS_IN_BATCH = 19; 
+                const START_INDEX = 77;             
+                const END_INDEX = 95;                 
+
+                let results = [];
+                
+                const rawJsonString = "[{\"English Sentence\":\"The winter cereal crop will receive enough moisture to germinate and grow; once the crop is harvested there will be a good amount of green material to accompany the dry crop residues.\",\"nllb-200-distilled-600M\":\"Dibjalo t\\u0161a dithoro t\\u0161a marega di tla amogela monola o lekanego wa go mela le go gola; ge dibjalo di \\u0161et\\u0161e di bunwe go tla ba le dilo t\\u0161e dint\\u0161i t\\u0161e tala t\\u0161eo di tlago go sepedi\\u0161ana le ma\\u0161aledi a dibjalo t\\u0161e di omilego.\",\"nllb-200-1.3b\":\"Dibjalo t\\u0161a mabele t\\u0161a marega di tla hwet\\u0161a monola wo o lekanego go mela le go gola; gatee ge dibjalo di bunwa go tla ba le palo e botse ya materiale o motala go feleget\\u0161a ma\\u0161aledi a dibjalo t\\u0161e di omilego.\",\"LoRA\":\"Puno ya mabele ya marega e tla hwet\\u0161a monola wo o lekanego go mela le go gola; ge puno e \\u0161et\\u0161e e bunet\\u0161we go tla ba le t\\u0161homi\\u0161o ye nt\\u0161i ya dilo t\\u0161e tala go sepedi\\u0161a ma\\u0161aledi a puno ye e omilego.\",\"QLoRA\":\"Dibjalo t\\u0161a dithoro t\\u0161a marega di tla hwet\\u0161a monola wo o lekanego wa go mela le go gola; ge dibjalo di \\u0161et\\u0161e di bunilwe, go tla ba le dilo t\\u0161e nt\\u0161i t\\u0161e tala t\\u0161eo di tlago go sepedi\\u0161ana le ma\\u0161aledi a dibjalo t\\u0161e di omilego.\",\"IA3\":\"Dibjalo t\\u0161a dithoro t\\u0161a marega di tla amogela monola o lekanego go mela le go gola; ge dibjalo di \\u0161et\\u0161e di bunwe go tla ba le dilo t\\u0161e dint\\u0161i t\\u0161e tala t\\u0161eo di tlago go sepedi\\u0161ana le ma\\u0161aledi a dibjalo t\\u0161e di omilego.\"},{\"English Sentence\":\"Disposal of Cooking Oil Parliament is in the process of procuring recycling containers for used cooking oil that can convert the disposed cooking oil into diesel.\",\"nllb-200-distilled-600M\":\"Go tlo\\u0161wa ga Palamente ya Oli ya go apea go dirwa ka go reka dibjana t\\u0161a go \\u0161omi\\u0161a oli ya go apea t\\u0161eo di ka feto\\u0161ago oli ya go apea yeo e lahlilwego go ba disele.\",\"nllb-200-1.3b\":\"Go tlo\\u0161wa ga makhura a go apea Palamente e mo tshepet\\u0161ong ya go reka dibjana t\\u0161a go bu\\u0161et\\u0161a makhura a go apea ao a diri\\u0161it\\u0161wego ao a ka feto\\u0161ago makhura a go apea ao a tlo\\u0161it\\u0161wego gore e be tisele.\",\"LoRA\":\"Go tlo\\u0161wa ga Oli ya go apea Palamente e t\\u0161wela pele ka go reka dibjana t\\u0161a go \\u0161omi\\u0161a oli ya go apea t\\u0161eo di ka feto\\u0161ago oli ya go apea yeo e tlo\\u0161wago go ba disele.\",\"QLoRA\":\"Go tlo\\u0161wa ga Oli ya go apea Palamente e t\\u0161wela pele ka go reka dibjana t\\u0161a go \\u0161omi\\u0161a oli ya go apea t\\u0161eo di ka feto\\u0161ago oli ya go apea yeo e lahlilwego go ba disele.\",\"IA3\":\"Go tlo\\u0161wa ga Palamente ya Oli ya go apea go dirwa ka go reka dibjana t\\u0161a go \\u0161omi\\u0161a oli ya go apea t\\u0161eo di ka feto\\u0161ago oli ya go apea yeo e lahlilwego go ba disele.\"},{\"English Sentence\":\"The access fees payable by a requester referred to in regulation 7(3) are as follows:\",\"nllb-200-distilled-600M\":\"Ditefelo t\\u0161a phihlelelo t\\u0161eo di lefelwago ke mokgopedi yo a ukangwego go molawana wa 7(3) ke t\\u0161e di latelago:\",\"nllb-200-1.3b\":\"Ditefo t\\u0161a phihlelelo t\\u0161eo di lefelwago ke mokgopedi go ya ka molawana wa 7 (3) ke t\\u0161e di latelago:\",\"LoRA\":\"Ditefelo t\\u0161a phihlelelo t\\u0161eo di lefelwago ke mokgopedi go ya ka molawana wa 7(3) ke t\\u0161e di latelago:\",\"QLoRA\":\"Ditefelo t\\u0161a phihlelelo t\\u0161eo di swanet\\u0161ego go lefelwa ke mokgopedi go ya ka molawana wa 7(3) ke t\\u0161e di latelago:\",\"IA3\":\"Ditefelo t\\u0161a phihlelelo t\\u0161eo di lefelwago ke mokgopedi yo a ukangwego go molawana wa 7(3) ke t\\u0161e di latelago:\"},{\"English Sentence\":\"Applicant and spouse's Identity Documents\",\"nllb-200-distilled-600M\":\"Ditokomane t\\u0161a boitsebi\\u0161o t\\u0161a mokgopedi le molekane\",\"nllb-200-1.3b\":\"Ditokomane t\\u0161a boitsebi\\u0161o t\\u0161a mokgopedi le molekane\",\"LoRA\":\"Ditokumente t\\u0161a boitsebi\\u0161o t\\u0161a mokgopedi le molekane\",\"QLoRA\":\"Ditokomane t\\u0161a boitsebi\\u0161o t\\u0161a mokgopedi le molekane\",\"IA3\":\"Ditokomane t\\u0161a boitsebi\\u0161o t\\u0161a mokgopedi le molekane\"},{\"English Sentence\":\"Claim for occupational injuries or disease\",\"nllb-200-distilled-600M\":\"Kgopelo ya dikgobalo t\\u0161a mo\\u0161omo goba bolwet\\u0161i\",\"nllb-200-1.3b\":\"Kgopelo ya dikgobalo goba malwet\\u0161i a mo\\u0161omo\",\"LoRA\":\"Kgopelo ya dikgobalo t\\u0161a mo\\u0161omong goba bolwet\\u0161i\",\"QLoRA\":\"Kgopelo ya dikgobalo t\\u0161a mo\\u0161omong goba bolwet\\u0161i\",\"IA3\":\"Kgopelo ya dikgobalo t\\u0161a mo\\u0161omo goba bolwet\\u0161i\"},{\"English Sentence\":\"It is hard to imagine the anguish of families who lost their children in such a tragic manner.\",\"nllb-200-distilled-600M\":\"Go thata go nagana kamoo malapa ao a ilego a lahlegelwa ke bana ba ona ka tsela e nyami\\u0161ago ka gona a ilego a nyama.\",\"nllb-200-1.3b\":\"Go thata go akanya manyami a malapa ao a lahleget\\u0161wego ke bana ba ona ka tsela e bjalo e nyami\\u0161ago.\",\"LoRA\":\"Go thata go akanya ka bohloko bja malapa ao a lahleget\\u0161wego ke bana ba ona ka tsela ye e nyami\\u0161ago.\",\"QLoRA\":\"Go thata go akanya bohloko bja malapa ao a lahleget\\u0161wego ke bana ba ona ka tsela ye e nyami\\u0161ago.\",\"IA3\":\"Go thata go nagana kamoo malapa ao a lahleget\\u0161wego ke bana ba ona ka tsela e nyami\\u0161ago a ilego a nyama ka gona.\"},{\"English Sentence\":\"Pests mentioned in this definition include any insects, weeds and diseases having a possible negative impact on the crop.\",\"nllb-200-distilled-600M\":\"Dikhunkhwane t\\u0161eo di hlalosit\\u0161wego tlhalo\\u0161ong ye di akaret\\u0161a dikhunkhwane, mefoka le malwet\\u0161i ao a ka bago le mafelelo a mabe go dibjalo.\",\"nllb-200-1.3b\":\"Dikokwana-hloko t\\u0161eo di bolet\\u0161wego ka go tlhalo\\u0161o ye di akaret\\u0161a dikhunkhwane, mengwang le malwet\\u0161i ao a ka bago le ditlamorago t\\u0161e mpe go dibjalo.\",\"LoRA\":\"Dikhunkhwane t\\u0161eo di bolet\\u0161wego ka tlhalo\\u0161o ye di akaret\\u0161a dikhunkhwane, mefoka le malwet\\u0161i ao a ka bago le khuet\\u0161o ye mpe go dibjalo.\",\"QLoRA\":\"Dikhunkhwane t\\u0161e di bolet\\u0161wego mo tlhalo\\u0161ong ye di akaret\\u0161a dikhunkhwane, mefoka le malwet\\u0161i ao a ka bago le khuet\\u0161o ye mpe go dibjalo.\",\"IA3\":\"Dikhunkhwane t\\u0161eo di bolet\\u0161wego tlhalo\\u0161ong ye di akaret\\u0161a dikhunkhwane, mefoka le malwet\\u0161i ao a ka bago le mafelelo a mabe go dibjalo.\"},{\"English Sentence\":\"They will be able to access courts at reduced costs.\",\"nllb-200-distilled-600M\":\"Ba tla kgona go tsena dikgorong t\\u0161a tsheko ka ditshenyegelo t\\u0161e di fokot\\u0161egilego.\",\"nllb-200-1.3b\":\"Ba tla kgona go ya dikgorong t\\u0161a tsheko ka ditshenyagalelo t\\u0161e di fokot\\u0161egilego.\",\"LoRA\":\"Ba tla kgona go fihlelela dikgorotsheko ka ditshenyegelo t\\u0161e di fokot\\u0161egilego.\",\"QLoRA\":\"Ba tla kgona go tsena dikgorong t\\u0161a tsheko ka ditshenyegelo t\\u0161e di fokot\\u0161egilego.\",\"IA3\":\"Ba tla kgona go tsena dikgorong t\\u0161a tsheko ka ditshenyegelo t\\u0161e di fokot\\u0161egilego.\"},{\"English Sentence\":\"Reading tables of soccer statistics.\",\"nllb-200-distilled-600M\":\"Go bala ditafole t\\u0161a dipalopalo t\\u0161a kgwele ya maoto.\",\"nllb-200-1.3b\":\"Go bala dipalo-palo t\\u0161a papadi ya kgwele ya maoto.\",\"LoRA\":\"Go bala ditafole t\\u0161a dipalopalo t\\u0161a kgwele ya maoto.\",\"QLoRA\":\"Go bala ditafole t\\u0161a dipalopalo t\\u0161a kgwele ya maoto.\",\"IA3\":\"Go bala ditafole t\\u0161a dipalopalo t\\u0161a kgwele ya maoto.\"},{\"English Sentence\":\"Principle XIII) was dismissed.\",\"nllb-200-distilled-600M\":\"Molao wa motheo wa XIII) o ile wa lahlwa.\",\"nllb-200-1.3b\":\"Molao wa XIII) o ile wa ganwa.\",\"LoRA\":\"Molao wa motheo wa XIII) o ile wa tlo\\u0161wa.\",\"QLoRA\":\"Molao wa motheo wa XIII) o ile wa tlo\\u0161wa.\",\"IA3\":\"Molao wa motheo wa XIII) o ile wa lahlwa.\"},{\"English Sentence\":\"Traditional courts have continued to exist and function largely under the old dispensation provided for in the Black Administration Act and other Provincial legislation.\",\"nllb-200-distilled-600M\":\"Dikgorotsheko t\\u0161a set\\u0161o di ile t\\u0161a t\\u0161wela pele di le gona le go \\u0161oma kudu ka tlase ga mokgwa wa kgale wo o beilwego ka go Black Administration Act le melawana e mengwe ya profense.\",\"nllb-200-1.3b\":\"Dikgorotsheko t\\u0161a set\\u0161o di ile t\\u0161a t\\u0161wela pele go ba gona le go \\u0161oma kudu ka tlase ga tumelelo ya kgale yeo e beilwego ke Molao wa Taolo ya Babaso le melao e mengwe ya profense.\",\"LoRA\":\"Dikgorotsheko t\\u0161a set\\u0161o di t\\u0161wet\\u0161e pele go ba gona le go \\u0161oma go ya ka mokgwa wa kgale wo o beilwego ke Molao wa Taolo ya Bathobaso le melao ye mengwe ya profense.\",\"QLoRA\":\"Dikgorotsheko t\\u0161a set\\u0161o di ile t\\u0161a t\\u0161wela pele go ba gona le go \\u0161oma kudu ka tlase ga taolo ya kgale yeo e beilwego ka go Molao wa Taolo ya Bathobaso le molao wo mongwe wa profense.\",\"IA3\":\"Dikgorotsheko t\\u0161a set\\u0161o di ile t\\u0161a t\\u0161wela pele go ba gona le go \\u0161oma kudu ka tlase ga taolo ya kgale yeo e beilwego ka go Black Administration Act le melawana e mengwe ya profense.\"},{\"English Sentence\":\"It is very important not to skip insulin doses, especially when you are ill.\",\"nllb-200-distilled-600M\":\"Go bohlokwa kudu gore o se ke wa tlo\\u0161a tekanyo ya insulin, kudukudu ge o babja.\",\"nllb-200-1.3b\":\"Go bohlokwa kudu gore o se ke wa tlogela go nwa insulin, kudu-kudu ge o babja.\",\"LoRA\":\"Go bohlokwa kudu gore o se ke wa fo\\u0161a tekanyo ya insulin, kudukudu ge o lwala.\",\"QLoRA\":\"Go bohlokwa kudu gore o se ke wa fo\\u0161a tekanyo ya insulin, kudukudu ge o babja.\",\"IA3\":\"Go bohlokwa kudu gore o se ke wa tlo\\u0161a tekanyo ya insulin, kudukudu ge o babja.\"},{\"English Sentence\":\"The engine can overheat, and if you do not stop quickly enough, it can even seize.\",\"nllb-200-distilled-600M\":\"Enjene e ka fi\\u0161a kudu, gomme ge e ba o sa emi\\u0161e ka lebelo le le lekanego, e ka ba ya kgwatha.\",\"nllb-200-1.3b\":\"Ent\\u0161ene e ka fi\\u0161a kudu, gomme ge e ba o sa emi\\u0161e ka pela ka mo go lekanego, e ka ba ya gobala.\",\"LoRA\":\"En\\u0161ene e ka fi\\u0161a kudu, gomme ge o sa emi\\u0161e ka lebelo le le lekanego, e ka ba ya go swara.\",\"QLoRA\":\"Enjene e ka fi\\u0161a kudu, gomme ge o sa emi\\u0161e ka lebelo le le lekanego, e ka ba ya swara.\",\"IA3\":\"Enjene e ka fi\\u0161a kudu, gomme ge e ba o sa emi\\u0161e ka lebelo le le lekanego, e ka ba ya kgwatha.\"},{\"English Sentence\":\"If we look at the price of:\",\"nllb-200-distilled-600M\":\"Ge e ba re lebelela theko ya:\",\"nllb-200-1.3b\":\"Ge e ba re lebelela theko ya:\",\"LoRA\":\"Ge re lebelela theko ya:\",\"QLoRA\":\"Ge re lebelela theko ya:\",\"IA3\":\"Ge e ba re lebelela theko ya:\"},{\"English Sentence\":\"For that reason, Cabinet has decided to table a legislative amendment to the Taxation Laws Amendment Act as a matter of urgency to postpone the commencement date from 1 March 2016 to 1 March 2018 to allow for further consultations with all key stakeholders.\",\"nllb-200-distilled-600M\":\"Ka baka leo, Kabinete e t\\u0161ere sephetho sa go tli\\u0161a pheto\\u0161o ya molao go Molao wa Pheto\\u0161o ya Melao ya Mot\\u0161helo bjalo ka taba ya t\\u0161hoganet\\u0161o go tlo\\u0161a let\\u0161at\\u0161ikgwedi la go thoma go tloga ka la 1 Mat\\u0161he 2016 go ya go la 1 Mat\\u0161he 2018 go dumelela ditheri\\u0161ano t\\u0161e di oket\\u0161egilego le bakgathatema ka moka ba bohlokwa.\",\"nllb-200-1.3b\":\"Ka lebaka leo, Kabinete e t\\u0161ere sephetho sa go tli\\u0161a pheto\\u0161o ya molao go Molao wa Pheto\\u0161o ya Melao ya Mot\\u0161helo bjalo ka taba ya t\\u0161hoganet\\u0161o go \\u0161uthi\\u0161a let\\u0161at\\u0161ikgwedi la go thoma go \\u0161oma go tloga ka 1 March 2016 go ya go 1 March 2018 go dumelela ditheri\\u0161ano t\\u0161e oket\\u0161egilego le bakgathatema ka moka ba bohlokwa.\",\"LoRA\":\"Ka lebaka leo, Kabinete e t\\u0161ere sephetho sa go tli\\u0161a pheto\\u0161o ya molao go Molao wa Pheto\\u0161o ya Melao ya Mot\\u0161helo bjalo ka taba ya t\\u0161hoganet\\u0161o go tlo\\u0161a let\\u0161at\\u0161ikgwedi la mathomo go tloga ka la 1 Mat\\u0161he 2016 go fihla ka la 1 Mat\\u0161he 2018 go dumelela ditheri\\u0161ano t\\u0161e di t\\u0161welago pele le bakgathatema ka moka ba bohlokwa.\",\"QLoRA\":\"Ka lebaka leo, Kabinete e t\\u0161ere sephetho sa go tli\\u0161a pheto\\u0161o ya molao go Molao wa Pheto\\u0161o ya Melao ya Mot\\u0161helo bjalo ka taba ya t\\u0161hoganet\\u0161o go tlo\\u0161a let\\u0161at\\u0161i la mathomo go tloga ka la 1 Mat\\u0161he 2016 go fihla ka la 1 Mat\\u0161he 2018 go dumelela ditheri\\u0161ano t\\u0161e di t\\u0161welago pele le bakgathatema ka moka ba bohlokwa.\",\"IA3\":\"Ka baka leo, Kabinete e t\\u0161ere sephetho sa go tli\\u0161a pheto\\u0161o ya molao go Molao wa Pheto\\u0161o ya Melao ya Mot\\u0161helo bjalo ka taba ya t\\u0161hoganet\\u0161o go tlo\\u0161a let\\u0161at\\u0161i la go thoma go tloga ka la 1 Mat\\u0161he 2016 go ya go la 1 Mat\\u0161he 2018 go dumelela ditheri\\u0161ano t\\u0161e di oket\\u0161egilego le bakgathatema ka moka ba bohlokwa.\"},{\"English Sentence\":\"She made a new pot.\",\"nllb-200-distilled-600M\":\"O ile a dira pit\\u0161a e mpsha.\",\"nllb-200-1.3b\":\"O dirile pit\\u0161a e mpsha.\",\"LoRA\":\"O dirile seroto se sefsa.\",\"QLoRA\":\"O dirile seroto se sefsa.\",\"IA3\":\"O ile a dira pit\\u0161a e mpsha.\"},{\"English Sentence\":\"Rape by any person in police custody\",\"nllb-200-distilled-600M\":\"Go katwa ke motho le ge e le ofe yo a lego kgolegong ya maphodisa\",\"nllb-200-1.3b\":\"Go kata ke motho le ge e le ofe yo a golegilwego ke maphodisa\",\"LoRA\":\"Go katwa ke motho ofe goba ofe yo a lego kgolegong ya maphodisa\",\"QLoRA\":\"Go katwa ke motho ofe goba ofe yo a lego kgolegong ya maphodisa\",\"IA3\":\"Go katwa ke motho le ge e le ofe yo a lego kgolegong ya maphodisa\"},{\"English Sentence\":\"Now tell your friend what sport you like and what sport you don't like.\",\"nllb-200-distilled-600M\":\"Bjale bot\\u0161a mogwera wa gago gore ke dipapadi dife t\\u0161eo o di ratago le t\\u0161eo o sa di ratego.\",\"nllb-200-1.3b\":\"Bjale bot\\u0161a mogwera wa gago papadi yeo o e ratago le yeo o sa e ratego.\",\"LoRA\":\"Bjale bot\\u0161a mogwera wa gago gore ke dipapadi dife t\\u0161eo o di ratago le t\\u0161eo o sa di ratego.\",\"QLoRA\":\"Bjale bot\\u0161a mogwera wa gago gore ke dipapadi dife t\\u0161eo o di ratago le t\\u0161eo o sa di ratego.\",\"IA3\":\"Bjale bot\\u0161a mogwera wa gago gore ke dipapadi dife t\\u0161eo o di ratago le t\\u0161eo o sa di ratego.\"},{\"English Sentence\":\"It is the only way to counter the cost-prize squeeze and feed the ever-growing population.\",\"nllb-200-distilled-600M\":\"Ke yona feela tsela ya go lwant\\u0161ha go gatelelwa ga ditshenyegelo le theko le go fepa badudi bao ba t\\u0161welago pele ba gola.\",\"nllb-200-1.3b\":\"Ke yona feela tsela ya go lwant\\u0161ha kgatelelo ya theko le go fepa badudi bao ba golago ka mehla.\",\"LoRA\":\"Ke yona fela tsela ya go lwant\\u0161ha kgatelelo ya ditshenyegelo le go fepa batho bao ba t\\u0161welago pele ba gola.\",\"QLoRA\":\"Ke yona tsela e nno\\u0161i ya go lwant\\u0161ha t\\u0161hiti\\u0161o ya ditshenyegelo le ditheki\\u0161o le go fepa batho bao ba t\\u0161welago pele ba gola.\",\"IA3\":\"Ke yona feela tsela ya go lwant\\u0161ha go gatelelwa ga ditshenyegelo le go fepa badudi bao ba t\\u0161welago pele ba gola.\"}]";
+                const df_js = JSON.parse(rawJsonString); 
+                
+                const ALL_MODELS = ["nllb-200-distilled-600M", "nllb-200-1.3b", "LoRA", "QLoRA", "IA3"];
+                const ALL_OPTIONS = ALL_MODELS.concat(["All of the above", "None of the above"]);
+
+
+                function showSegment(id) {
+                    $('.segment-container').addClass('hidden');
+                    $('#segment-' + id).removeClass('hidden');
+                    $('html, body').scrollTop($('#survey-content').offset().top - 20);
+                }
+
+                function nextSegment(currentId) {
+                    const form = $('#form-' + currentId);
+                    const selectedValue = form.find('input[type="radio"]:checked').val();
+                    
+                    if (!selectedValue) {
+                        alert("Please select exactly one option before proceeding.");
+                        return;
+                    }
+                    
+                    const localIndex = currentId - START_INDEX;
+                    results[localIndex] = {
+                        id: currentId,
+                        english: df_js[localIndex]['English Sentence'], 
+                        selection: selectedValue 
+                    };
+
+                    if (currentId === END_INDEX) {
+                        showSegment(END_INDEX + 1); 
+                    } else {
+                        showSegment(currentId + 1); 
+                    }
+                }
+
+                function prevSegment(currentId) {
+                    if (currentId > START_INDEX) { 
+                        showSegment(currentId - 1);
+                    }
+                }
+
+                function compileResults() {
+                    let tsvOutput = "";
+                    const TAB = '\t'; // Tab character
+                    
+                    // --- 1. Define TSV Header (Crucial for CSV structure) ---
+                    // We need one column for the final choice, and a binary column for each model.
+                    const header = ["Absolute_Segment_ID", "Reviewer_Choice", 
+                                    ...ALL_MODELS.map(m => m.replace(/[^a-zA-Z0-9]/g, '_') + '_Accepted')];
+                    tsvOutput += header.join(TAB) + '\n';
+
+                    // --- 2. Process Results and Generate TSV Rows ---
+                    results.forEach(item => {
+                        const chosenOption = item.selection;
+                        let row = [];
+
+                        // 1. Column: Absolute_Segment_ID
+                        row.push(item.id); 
+
+                        // 2. Column: Reviewer_Choice
+                        row.push(chosenOption);
+
+                        // 3. Columns: Binary Acceptance Flags (0 or 1)
+                        let acceptedModels = [];
+                        if (chosenOption === "All of the above") {
+                            acceptedModels = ALL_MODELS;
+                        } else if (chosenOption !== "None of the above") {
+                            acceptedModels = [chosenOption];
+                        }
+
+                        ALL_MODELS.forEach(model => {
+                            // Push 1 if the model was accepted, 0 otherwise
+                            row.push(acceptedModels.includes(model) ? 1 : 0); 
+                        });
+
+                        tsvOutput += row.join(TAB) + '\n';
+                    });
+                    
+                    // --- 3. Display TSV Output ---
+                    const infoMessage = "### COPY THE TEXT BELOW AND PASTE INTO A FILE NAMED 'results_batch_77_to_95.tsv' ###\n\n";
+                    
+                    $('#results-output').val(infoMessage + tsvOutput);
+                    $('#results-area').css('display', 'block');
+                }
+                
+                $(document).ready(function() {
+                    showSegment(START_INDEX);
+                });
+            </script>
+        </head>
+        <body>
+
+        <h2 style="color: #007BFF;">Translation Acceptance Survey: Batch 5</h2>
+        <h3>Segments 77 to 95 of 150 Total</h3>
+        <p>Instructions: For each English sentence, choose the **BEST** option. Your options are selecting a specific model, or choosing "All of the above" or "None of the above". **Only one choice is allowed.**</p>
+        
+        <div id="survey-content">
+        
+            <div id="segment-77" class="segment-container ">
+                <h3>Segment 77 of 150 (Batch 5)</h3>
+                
+                <div class="source-text">
+                    <strong>English Source:</strong> The winter cereal crop will receive enough moisture to germinate and grow; once the crop is harvested there will be a good amount of green material to accompany the dry crop residues.
+                </div>
+                <div class="reference-text">
+                    <strong>Reference Sepedi:</strong> Dibjalothoro tše di sa humana monola wo o lekanego gore di hloge le gona di gole; mola dibjalo tša selemo di bunnwe go tla ba go na le phulo ye botse ye tala go felegetša mašaledi a dibjalo tšeo di bunnwego.
+                </div>
+                
+                <div class="model-translations-group">
+                    <p>Select **ONE** option below:</p>
+                    <form id="form-77">
+            
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="nllb-200-distilled-600M" required>
+                            <strong>nllb-200-distilled-600M:</strong> Dibjalo tša dithoro tša marega di tla amogela monola o lekanego wa go mela le go gola; ge dibjalo di šetše di bunwe go tla ba le dilo tše dintši tše tala tšeo di tlago go sepedišana le mašaledi a dibjalo tše di omilego.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="nllb-200-1.3b" required>
+                            <strong>nllb-200-1.3b:</strong> Dibjalo tša mabele tša marega di tla hwetša monola wo o lekanego go mela le go gola; gatee ge dibjalo di bunwa go tla ba le palo e botse ya materiale o motala go felegetša mašaledi a dibjalo tše di omilego.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="LoRA" required>
+                            <strong>LoRA:</strong> Puno ya mabele ya marega e tla hwetša monola wo o lekanego go mela le go gola; ge puno e šetše e bunetšwe go tla ba le tšhomišo ye ntši ya dilo tše tala go sepediša mašaledi a puno ye e omilego.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="QLoRA" required>
+                            <strong>QLoRA:</strong> Dibjalo tša dithoro tša marega di tla hwetša monola wo o lekanego wa go mela le go gola; ge dibjalo di šetše di bunilwe, go tla ba le dilo tše ntši tše tala tšeo di tlago go sepedišana le mašaledi a dibjalo tše di omilego.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="IA3" required>
+                            <strong>IA3:</strong> Dibjalo tša dithoro tša marega di tla amogela monola o lekanego go mela le go gola; ge dibjalo di šetše di bunwe go tla ba le dilo tše dintši tše tala tšeo di tlago go sepedišana le mašaledi a dibjalo tše di omilego.
+                        </label>
+                
+                        <label class="translation-option special-option">
+                            <input type="radio" name="selected_option" value="All of the above" required>
+                            <strong>All of the above</strong> (All model translations are equally acceptable)
+                        </label>
+                        <label class="translation-option special-option">
+                            <input type="radio" name="selected_option" value="None of the above" required>
+                            <strong>None of the above</strong> (None of the model translations are acceptable)
+                        </label>
+                    </form>
+                </div>
+                
+                <div class="segment-nav">
+                    <button onclick="prevSegment(77)" disabled>Previous</button>
+                    <button onclick="nextSegment(77)" id="next-btn-77">Next</button>
+                </div>
+            </div>
+            
+            <div id="segment-78" class="segment-container hidden">
+                <h3>Segment 78 of 150 (Batch 5)</h3>
+                
+                <div class="source-text">
+                    <strong>English Source:</strong> Disposal of Cooking Oil Parliament is in the process of procuring recycling containers for used cooking oil that can convert the disposed cooking oil into diesel.
+                </div>
+                <div class="reference-text">
+                    <strong>Reference Sepedi:</strong> Go lahlwa ga Oli ya go Apea Palamente e lenaneong la go hwetša ditšhelwa tša go ka šomišwa leboelela tša oli ya go apea tšeo di ka fetošago oli yeo ya go apea go ya go tisele.
+                </div>
+                
+                <div class="model-translations-group">
+                    <p>Select **ONE** option below:</p>
+                    <form id="form-78">
+            
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="nllb-200-distilled-600M" required>
+                            <strong>nllb-200-distilled-600M:</strong> Go tlošwa ga Palamente ya Oli ya go apea go dirwa ka go reka dibjana tša go šomiša oli ya go apea tšeo di ka fetošago oli ya go apea yeo e lahlilwego go ba disele.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="nllb-200-1.3b" required>
+                            <strong>nllb-200-1.3b:</strong> Go tlošwa ga makhura a go apea Palamente e mo tshepetšong ya go reka dibjana tša go bušetša makhura a go apea ao a dirišitšwego ao a ka fetošago makhura a go apea ao a tlošitšwego gore e be tisele.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="LoRA" required>
+                            <strong>LoRA:</strong> Go tlošwa ga Oli ya go apea Palamente e tšwela pele ka go reka dibjana tša go šomiša oli ya go apea tšeo di ka fetošago oli ya go apea yeo e tlošwago go ba disele.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="QLoRA" required>
+                            <strong>QLoRA:</strong> Go tlošwa ga Oli ya go apea Palamente e tšwela pele ka go reka dibjana tša go šomiša oli ya go apea tšeo di ka fetošago oli ya go apea yeo e lahlilwego go ba disele.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="IA3" required>
+                            <strong>IA3:</strong> Go tlošwa ga Palamente ya Oli ya go apea go dirwa ka go reka dibjana tša go šomiša oli ya go apea tšeo di ka fetošago oli ya go apea yeo e lahlilwego go ba disele.
+                        </label>
+                
+                        <label class="translation-option special-option">
+                            <input type="radio" name="selected_option" value="All of the above" required>
+                            <strong>All of the above</strong> (All model translations are equally acceptable)
+                        </label>
+                        <label class="translation-option special-option">
+                            <input type="radio" name="selected_option" value="None of the above" required>
+                            <strong>None of the above</strong> (None of the model translations are acceptable)
+                        </label>
+                    </form>
+                </div>
+                
+                <div class="segment-nav">
+                    <button onclick="prevSegment(78)" >Previous</button>
+                    <button onclick="nextSegment(78)" id="next-btn-78">Next</button>
+                </div>
+            </div>
+            
+            <div id="segment-79" class="segment-container hidden">
+                <h3>Segment 79 of 150 (Batch 5)</h3>
+                
+                <div class="source-text">
+                    <strong>English Source:</strong> The access fees payable by a requester referred to in regulation 7(3) are as follows:
+                </div>
+                <div class="reference-text">
+                    <strong>Reference Sepedi:</strong> Ditefelo ya phihlelelo yeo e lefiwago ke mokgopedi yeo e laeditšwego go molawana 7(3) di ka tsela ye e latelago:
+                </div>
+                
+                <div class="model-translations-group">
+                    <p>Select **ONE** option below:</p>
+                    <form id="form-79">
+            
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="nllb-200-distilled-600M" required>
+                            <strong>nllb-200-distilled-600M:</strong> Ditefelo tša phihlelelo tšeo di lefelwago ke mokgopedi yo a ukangwego go molawana wa 7(3) ke tše di latelago:
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="nllb-200-1.3b" required>
+                            <strong>nllb-200-1.3b:</strong> Ditefo tša phihlelelo tšeo di lefelwago ke mokgopedi go ya ka molawana wa 7 (3) ke tše di latelago:
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="LoRA" required>
+                            <strong>LoRA:</strong> Ditefelo tša phihlelelo tšeo di lefelwago ke mokgopedi go ya ka molawana wa 7(3) ke tše di latelago:
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="QLoRA" required>
+                            <strong>QLoRA:</strong> Ditefelo tša phihlelelo tšeo di swanetšego go lefelwa ke mokgopedi go ya ka molawana wa 7(3) ke tše di latelago:
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="IA3" required>
+                            <strong>IA3:</strong> Ditefelo tša phihlelelo tšeo di lefelwago ke mokgopedi yo a ukangwego go molawana wa 7(3) ke tše di latelago:
+                        </label>
+                
+                        <label class="translation-option special-option">
+                            <input type="radio" name="selected_option" value="All of the above" required>
+                            <strong>All of the above</strong> (All model translations are equally acceptable)
+                        </label>
+                        <label class="translation-option special-option">
+                            <input type="radio" name="selected_option" value="None of the above" required>
+                            <strong>None of the above</strong> (None of the model translations are acceptable)
+                        </label>
+                    </form>
+                </div>
+                
+                <div class="segment-nav">
+                    <button onclick="prevSegment(79)" >Previous</button>
+                    <button onclick="nextSegment(79)" id="next-btn-79">Next</button>
+                </div>
+            </div>
+            
+            <div id="segment-80" class="segment-container hidden">
+                <h3>Segment 80 of 150 (Batch 5)</h3>
+                
+                <div class="source-text">
+                    <strong>English Source:</strong> Applicant and spouse's Identity Documents
+                </div>
+                <div class="reference-text">
+                    <strong>Reference Sepedi:</strong> Dipukwana tša Boitsebišo tša modiradikgopelo le tša molekane wa gagwe
+                </div>
+                
+                <div class="model-translations-group">
+                    <p>Select **ONE** option below:</p>
+                    <form id="form-80">
+            
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="nllb-200-distilled-600M" required>
+                            <strong>nllb-200-distilled-600M:</strong> Ditokomane tša boitsebišo tša mokgopedi le molekane
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="nllb-200-1.3b" required>
+                            <strong>nllb-200-1.3b:</strong> Ditokomane tša boitsebišo tša mokgopedi le molekane
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="LoRA" required>
+                            <strong>LoRA:</strong> Ditokumente tša boitsebišo tša mokgopedi le molekane
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="QLoRA" required>
+                            <strong>QLoRA:</strong> Ditokomane tša boitsebišo tša mokgopedi le molekane
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="IA3" required>
+                            <strong>IA3:</strong> Ditokomane tša boitsebišo tša mokgopedi le molekane
+                        </label>
+                
+                        <label class="translation-option special-option">
+                            <input type="radio" name="selected_option" value="All of the above" required>
+                            <strong>All of the above</strong> (All model translations are equally acceptable)
+                        </label>
+                        <label class="translation-option special-option">
+                            <input type="radio" name="selected_option" value="None of the above" required>
+                            <strong>None of the above</strong> (None of the model translations are acceptable)
+                        </label>
+                    </form>
+                </div>
+                
+                <div class="segment-nav">
+                    <button onclick="prevSegment(80)" >Previous</button>
+                    <button onclick="nextSegment(80)" id="next-btn-80">Next</button>
+                </div>
+            </div>
+            
+            <div id="segment-81" class="segment-container hidden">
+                <h3>Segment 81 of 150 (Batch 5)</h3>
+                
+                <div class="source-text">
+                    <strong>English Source:</strong> Claim for occupational injuries or disease
+                </div>
+                <div class="reference-text">
+                    <strong>Reference Sepedi:</strong> Kgopelo ya tšhelete ya kgobalo goba bolwetši motho a le mošomong
+                </div>
+                
+                <div class="model-translations-group">
+                    <p>Select **ONE** option below:</p>
+                    <form id="form-81">
+            
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="nllb-200-distilled-600M" required>
+                            <strong>nllb-200-distilled-600M:</strong> Kgopelo ya dikgobalo tša mošomo goba bolwetši
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="nllb-200-1.3b" required>
+                            <strong>nllb-200-1.3b:</strong> Kgopelo ya dikgobalo goba malwetši a mošomo
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="LoRA" required>
+                            <strong>LoRA:</strong> Kgopelo ya dikgobalo tša mošomong goba bolwetši
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="QLoRA" required>
+                            <strong>QLoRA:</strong> Kgopelo ya dikgobalo tša mošomong goba bolwetši
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="IA3" required>
+                            <strong>IA3:</strong> Kgopelo ya dikgobalo tša mošomo goba bolwetši
+                        </label>
+                
+                        <label class="translation-option special-option">
+                            <input type="radio" name="selected_option" value="All of the above" required>
+                            <strong>All of the above</strong> (All model translations are equally acceptable)
+                        </label>
+                        <label class="translation-option special-option">
+                            <input type="radio" name="selected_option" value="None of the above" required>
+                            <strong>None of the above</strong> (None of the model translations are acceptable)
+                        </label>
+                    </form>
+                </div>
+                
+                <div class="segment-nav">
+                    <button onclick="prevSegment(81)" >Previous</button>
+                    <button onclick="nextSegment(81)" id="next-btn-81">Next</button>
+                </div>
+            </div>
+            
+            <div id="segment-82" class="segment-container hidden">
+                <h3>Segment 82 of 150 (Batch 5)</h3>
+                
+                <div class="source-text">
+                    <strong>English Source:</strong> It is hard to imagine the anguish of families who lost their children in such a tragic manner.
+                </div>
+                <div class="reference-text">
+                    <strong>Reference Sepedi:</strong> Go tloga go le boima kudu go gopola ka tlalelo ya malapa a bao ba lobilego bana ba bona ka mokgwa wo wo sehlogo.
+                </div>
+                
+                <div class="model-translations-group">
+                    <p>Select **ONE** option below:</p>
+                    <form id="form-82">
+            
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="nllb-200-distilled-600M" required>
+                            <strong>nllb-200-distilled-600M:</strong> Go thata go nagana kamoo malapa ao a ilego a lahlegelwa ke bana ba ona ka tsela e nyamišago ka gona a ilego a nyama.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="nllb-200-1.3b" required>
+                            <strong>nllb-200-1.3b:</strong> Go thata go akanya manyami a malapa ao a lahlegetšwego ke bana ba ona ka tsela e bjalo e nyamišago.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="LoRA" required>
+                            <strong>LoRA:</strong> Go thata go akanya ka bohloko bja malapa ao a lahlegetšwego ke bana ba ona ka tsela ye e nyamišago.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="QLoRA" required>
+                            <strong>QLoRA:</strong> Go thata go akanya bohloko bja malapa ao a lahlegetšwego ke bana ba ona ka tsela ye e nyamišago.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="IA3" required>
+                            <strong>IA3:</strong> Go thata go nagana kamoo malapa ao a lahlegetšwego ke bana ba ona ka tsela e nyamišago a ilego a nyama ka gona.
+                        </label>
+                
+                        <label class="translation-option special-option">
+                            <input type="radio" name="selected_option" value="All of the above" required>
+                            <strong>All of the above</strong> (All model translations are equally acceptable)
+                        </label>
+                        <label class="translation-option special-option">
+                            <input type="radio" name="selected_option" value="None of the above" required>
+                            <strong>None of the above</strong> (None of the model translations are acceptable)
+                        </label>
+                    </form>
+                </div>
+                
+                <div class="segment-nav">
+                    <button onclick="prevSegment(82)" >Previous</button>
+                    <button onclick="nextSegment(82)" id="next-btn-82">Next</button>
+                </div>
+            </div>
+            
+            <div id="segment-83" class="segment-container hidden">
+                <h3>Segment 83 of 150 (Batch 5)</h3>
+                
+                <div class="source-text">
+                    <strong>English Source:</strong> Pests mentioned in this definition include any insects, weeds and diseases having a possible negative impact on the crop.
+                </div>
+                <div class="reference-text">
+                    <strong>Reference Sepedi:</strong> Disenyi tše di umakwago di akaretša dikhunkhwane, mengwang le malwetši afe le afe ao a ka huetšago dibjalo ka mokgwa wo mobe.
+                </div>
+                
+                <div class="model-translations-group">
+                    <p>Select **ONE** option below:</p>
+                    <form id="form-83">
+            
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="nllb-200-distilled-600M" required>
+                            <strong>nllb-200-distilled-600M:</strong> Dikhunkhwane tšeo di hlalositšwego tlhalošong ye di akaretša dikhunkhwane, mefoka le malwetši ao a ka bago le mafelelo a mabe go dibjalo.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="nllb-200-1.3b" required>
+                            <strong>nllb-200-1.3b:</strong> Dikokwana-hloko tšeo di boletšwego ka go tlhalošo ye di akaretša dikhunkhwane, mengwang le malwetši ao a ka bago le ditlamorago tše mpe go dibjalo.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="LoRA" required>
+                            <strong>LoRA:</strong> Dikhunkhwane tšeo di boletšwego ka tlhalošo ye di akaretša dikhunkhwane, mefoka le malwetši ao a ka bago le khuetšo ye mpe go dibjalo.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="QLoRA" required>
+                            <strong>QLoRA:</strong> Dikhunkhwane tše di boletšwego mo tlhalošong ye di akaretša dikhunkhwane, mefoka le malwetši ao a ka bago le khuetšo ye mpe go dibjalo.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="IA3" required>
+                            <strong>IA3:</strong> Dikhunkhwane tšeo di boletšwego tlhalošong ye di akaretša dikhunkhwane, mefoka le malwetši ao a ka bago le mafelelo a mabe go dibjalo.
+                        </label>
+                
+                        <label class="translation-option special-option">
+                            <input type="radio" name="selected_option" value="All of the above" required>
+                            <strong>All of the above</strong> (All model translations are equally acceptable)
+                        </label>
+                        <label class="translation-option special-option">
+                            <input type="radio" name="selected_option" value="None of the above" required>
+                            <strong>None of the above</strong> (None of the model translations are acceptable)
+                        </label>
+                    </form>
+                </div>
+                
+                <div class="segment-nav">
+                    <button onclick="prevSegment(83)" >Previous</button>
+                    <button onclick="nextSegment(83)" id="next-btn-83">Next</button>
+                </div>
+            </div>
+            
+            <div id="segment-84" class="segment-container hidden">
+                <h3>Segment 84 of 150 (Batch 5)</h3>
+                
+                <div class="source-text">
+                    <strong>English Source:</strong> They will be able to access courts at reduced costs.
+                </div>
+                <div class="reference-text">
+                    <strong>Reference Sepedi:</strong> Ditšhaba tše di tla kgona go fihlelela dikgorotsheko ka ditefišo tše di fokoditšwego.
+                </div>
+                
+                <div class="model-translations-group">
+                    <p>Select **ONE** option below:</p>
+                    <form id="form-84">
+            
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="nllb-200-distilled-600M" required>
+                            <strong>nllb-200-distilled-600M:</strong> Ba tla kgona go tsena dikgorong tša tsheko ka ditshenyegelo tše di fokotšegilego.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="nllb-200-1.3b" required>
+                            <strong>nllb-200-1.3b:</strong> Ba tla kgona go ya dikgorong tša tsheko ka ditshenyagalelo tše di fokotšegilego.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="LoRA" required>
+                            <strong>LoRA:</strong> Ba tla kgona go fihlelela dikgorotsheko ka ditshenyegelo tše di fokotšegilego.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="QLoRA" required>
+                            <strong>QLoRA:</strong> Ba tla kgona go tsena dikgorong tša tsheko ka ditshenyegelo tše di fokotšegilego.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="IA3" required>
+                            <strong>IA3:</strong> Ba tla kgona go tsena dikgorong tša tsheko ka ditshenyegelo tše di fokotšegilego.
+                        </label>
+                
+                        <label class="translation-option special-option">
+                            <input type="radio" name="selected_option" value="All of the above" required>
+                            <strong>All of the above</strong> (All model translations are equally acceptable)
+                        </label>
+                        <label class="translation-option special-option">
+                            <input type="radio" name="selected_option" value="None of the above" required>
+                            <strong>None of the above</strong> (None of the model translations are acceptable)
+                        </label>
+                    </form>
+                </div>
+                
+                <div class="segment-nav">
+                    <button onclick="prevSegment(84)" >Previous</button>
+                    <button onclick="nextSegment(84)" id="next-btn-84">Next</button>
+                </div>
+            </div>
+            
+            <div id="segment-85" class="segment-container hidden">
+                <h3>Segment 85 of 150 (Batch 5)</h3>
+                
+                <div class="source-text">
+                    <strong>English Source:</strong> Reading tables of soccer statistics.
+                </div>
+                <div class="reference-text">
+                    <strong>Reference Sepedi:</strong> Gohle moo yago ke kgwele ya maoto.
+                </div>
+                
+                <div class="model-translations-group">
+                    <p>Select **ONE** option below:</p>
+                    <form id="form-85">
+            
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="nllb-200-distilled-600M" required>
+                            <strong>nllb-200-distilled-600M:</strong> Go bala ditafole tša dipalopalo tša kgwele ya maoto.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="nllb-200-1.3b" required>
+                            <strong>nllb-200-1.3b:</strong> Go bala dipalo-palo tša papadi ya kgwele ya maoto.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="LoRA" required>
+                            <strong>LoRA:</strong> Go bala ditafole tša dipalopalo tša kgwele ya maoto.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="QLoRA" required>
+                            <strong>QLoRA:</strong> Go bala ditafole tša dipalopalo tša kgwele ya maoto.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="IA3" required>
+                            <strong>IA3:</strong> Go bala ditafole tša dipalopalo tša kgwele ya maoto.
+                        </label>
+                
+                        <label class="translation-option special-option">
+                            <input type="radio" name="selected_option" value="All of the above" required>
+                            <strong>All of the above</strong> (All model translations are equally acceptable)
+                        </label>
+                        <label class="translation-option special-option">
+                            <input type="radio" name="selected_option" value="None of the above" required>
+                            <strong>None of the above</strong> (None of the model translations are acceptable)
+                        </label>
+                    </form>
+                </div>
+                
+                <div class="segment-nav">
+                    <button onclick="prevSegment(85)" >Previous</button>
+                    <button onclick="nextSegment(85)" id="next-btn-85">Next</button>
+                </div>
+            </div>
+            
+            <div id="segment-86" class="segment-container hidden">
+                <h3>Segment 86 of 150 (Batch 5)</h3>
+                
+                <div class="source-text">
+                    <strong>English Source:</strong> Principle XIII) was dismissed.
+                </div>
+                <div class="reference-text">
+                    <strong>Reference Sepedi:</strong> Ka tlase ga Molaotheo wa mafelelo Dikgoro tša Setšo di hlalošwa bjalo ka
+                </div>
+                
+                <div class="model-translations-group">
+                    <p>Select **ONE** option below:</p>
+                    <form id="form-86">
+            
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="nllb-200-distilled-600M" required>
+                            <strong>nllb-200-distilled-600M:</strong> Molao wa motheo wa XIII) o ile wa lahlwa.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="nllb-200-1.3b" required>
+                            <strong>nllb-200-1.3b:</strong> Molao wa XIII) o ile wa ganwa.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="LoRA" required>
+                            <strong>LoRA:</strong> Molao wa motheo wa XIII) o ile wa tlošwa.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="QLoRA" required>
+                            <strong>QLoRA:</strong> Molao wa motheo wa XIII) o ile wa tlošwa.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="IA3" required>
+                            <strong>IA3:</strong> Molao wa motheo wa XIII) o ile wa lahlwa.
+                        </label>
+                
+                        <label class="translation-option special-option">
+                            <input type="radio" name="selected_option" value="All of the above" required>
+                            <strong>All of the above</strong> (All model translations are equally acceptable)
+                        </label>
+                        <label class="translation-option special-option">
+                            <input type="radio" name="selected_option" value="None of the above" required>
+                            <strong>None of the above</strong> (None of the model translations are acceptable)
+                        </label>
+                    </form>
+                </div>
+                
+                <div class="segment-nav">
+                    <button onclick="prevSegment(86)" >Previous</button>
+                    <button onclick="nextSegment(86)" id="next-btn-86">Next</button>
+                </div>
+            </div>
+            
+            <div id="segment-87" class="segment-container hidden">
+                <h3>Segment 87 of 150 (Batch 5)</h3>
+                
+                <div class="source-text">
+                    <strong>English Source:</strong> Traditional courts have continued to exist and function largely under the old dispensation provided for in the Black Administration Act and other Provincial legislation.
+                </div>
+                <div class="reference-text">
+                    <strong>Reference Sepedi:</strong> Dikgoro tša Setšo di tšwetše pele go šoma ka fase ga melao ya Molao wa Taolo ya Babaso (Black Administration Act) le melao ye mengwe ya Diprofense.
+                </div>
+                
+                <div class="model-translations-group">
+                    <p>Select **ONE** option below:</p>
+                    <form id="form-87">
+            
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="nllb-200-distilled-600M" required>
+                            <strong>nllb-200-distilled-600M:</strong> Dikgorotsheko tša setšo di ile tša tšwela pele di le gona le go šoma kudu ka tlase ga mokgwa wa kgale wo o beilwego ka go Black Administration Act le melawana e mengwe ya profense.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="nllb-200-1.3b" required>
+                            <strong>nllb-200-1.3b:</strong> Dikgorotsheko tša setšo di ile tša tšwela pele go ba gona le go šoma kudu ka tlase ga tumelelo ya kgale yeo e beilwego ke Molao wa Taolo ya Babaso le melao e mengwe ya profense.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="LoRA" required>
+                            <strong>LoRA:</strong> Dikgorotsheko tša setšo di tšwetše pele go ba gona le go šoma go ya ka mokgwa wa kgale wo o beilwego ke Molao wa Taolo ya Bathobaso le melao ye mengwe ya profense.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="QLoRA" required>
+                            <strong>QLoRA:</strong> Dikgorotsheko tša setšo di ile tša tšwela pele go ba gona le go šoma kudu ka tlase ga taolo ya kgale yeo e beilwego ka go Molao wa Taolo ya Bathobaso le molao wo mongwe wa profense.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="IA3" required>
+                            <strong>IA3:</strong> Dikgorotsheko tša setšo di ile tša tšwela pele go ba gona le go šoma kudu ka tlase ga taolo ya kgale yeo e beilwego ka go Black Administration Act le melawana e mengwe ya profense.
+                        </label>
+                
+                        <label class="translation-option special-option">
+                            <input type="radio" name="selected_option" value="All of the above" required>
+                            <strong>All of the above</strong> (All model translations are equally acceptable)
+                        </label>
+                        <label class="translation-option special-option">
+                            <input type="radio" name="selected_option" value="None of the above" required>
+                            <strong>None of the above</strong> (None of the model translations are acceptable)
+                        </label>
+                    </form>
+                </div>
+                
+                <div class="segment-nav">
+                    <button onclick="prevSegment(87)" >Previous</button>
+                    <button onclick="nextSegment(87)" id="next-btn-87">Next</button>
+                </div>
+            </div>
+            
+            <div id="segment-88" class="segment-container hidden">
+                <h3>Segment 88 of 150 (Batch 5)</h3>
+                
+                <div class="source-text">
+                    <strong>English Source:</strong> It is very important not to skip insulin doses, especially when you are ill.
+                </div>
+                <div class="reference-text">
+                    <strong>Reference Sepedi:</strong> Go bohlokwa kudu go se fetwe ke nako ya go diriša insuline, kudukudu ge o babja.
+                </div>
+                
+                <div class="model-translations-group">
+                    <p>Select **ONE** option below:</p>
+                    <form id="form-88">
+            
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="nllb-200-distilled-600M" required>
+                            <strong>nllb-200-distilled-600M:</strong> Go bohlokwa kudu gore o se ke wa tloša tekanyo ya insulin, kudukudu ge o babja.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="nllb-200-1.3b" required>
+                            <strong>nllb-200-1.3b:</strong> Go bohlokwa kudu gore o se ke wa tlogela go nwa insulin, kudu-kudu ge o babja.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="LoRA" required>
+                            <strong>LoRA:</strong> Go bohlokwa kudu gore o se ke wa foša tekanyo ya insulin, kudukudu ge o lwala.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="QLoRA" required>
+                            <strong>QLoRA:</strong> Go bohlokwa kudu gore o se ke wa foša tekanyo ya insulin, kudukudu ge o babja.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="IA3" required>
+                            <strong>IA3:</strong> Go bohlokwa kudu gore o se ke wa tloša tekanyo ya insulin, kudukudu ge o babja.
+                        </label>
+                
+                        <label class="translation-option special-option">
+                            <input type="radio" name="selected_option" value="All of the above" required>
+                            <strong>All of the above</strong> (All model translations are equally acceptable)
+                        </label>
+                        <label class="translation-option special-option">
+                            <input type="radio" name="selected_option" value="None of the above" required>
+                            <strong>None of the above</strong> (None of the model translations are acceptable)
+                        </label>
+                    </form>
+                </div>
+                
+                <div class="segment-nav">
+                    <button onclick="prevSegment(88)" >Previous</button>
+                    <button onclick="nextSegment(88)" id="next-btn-88">Next</button>
+                </div>
+            </div>
+            
+            <div id="segment-89" class="segment-container hidden">
+                <h3>Segment 89 of 150 (Batch 5)</h3>
+                
+                <div class="source-text">
+                    <strong>English Source:</strong> The engine can overheat, and if you do not stop quickly enough, it can even seize.
+                </div>
+                <div class="reference-text">
+                    <strong>Reference Sepedi:</strong> Entšene e ka fiša go fetiša mme ge o sa e time ka pela e ka senyega.
+                </div>
+                
+                <div class="model-translations-group">
+                    <p>Select **ONE** option below:</p>
+                    <form id="form-89">
+            
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="nllb-200-distilled-600M" required>
+                            <strong>nllb-200-distilled-600M:</strong> Enjene e ka fiša kudu, gomme ge e ba o sa emiše ka lebelo le le lekanego, e ka ba ya kgwatha.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="nllb-200-1.3b" required>
+                            <strong>nllb-200-1.3b:</strong> Entšene e ka fiša kudu, gomme ge e ba o sa emiše ka pela ka mo go lekanego, e ka ba ya gobala.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="LoRA" required>
+                            <strong>LoRA:</strong> Enšene e ka fiša kudu, gomme ge o sa emiše ka lebelo le le lekanego, e ka ba ya go swara.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="QLoRA" required>
+                            <strong>QLoRA:</strong> Enjene e ka fiša kudu, gomme ge o sa emiše ka lebelo le le lekanego, e ka ba ya swara.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="IA3" required>
+                            <strong>IA3:</strong> Enjene e ka fiša kudu, gomme ge e ba o sa emiše ka lebelo le le lekanego, e ka ba ya kgwatha.
+                        </label>
+                
+                        <label class="translation-option special-option">
+                            <input type="radio" name="selected_option" value="All of the above" required>
+                            <strong>All of the above</strong> (All model translations are equally acceptable)
+                        </label>
+                        <label class="translation-option special-option">
+                            <input type="radio" name="selected_option" value="None of the above" required>
+                            <strong>None of the above</strong> (None of the model translations are acceptable)
+                        </label>
+                    </form>
+                </div>
+                
+                <div class="segment-nav">
+                    <button onclick="prevSegment(89)" >Previous</button>
+                    <button onclick="nextSegment(89)" id="next-btn-89">Next</button>
+                </div>
+            </div>
+            
+            <div id="segment-90" class="segment-container hidden">
+                <h3>Segment 90 of 150 (Batch 5)</h3>
+                
+                <div class="source-text">
+                    <strong>English Source:</strong> If we look at the price of:
+                </div>
+                <div class="reference-text">
+                    <strong>Reference Sepedi:</strong> Ge re lebelela theko ya:
+                </div>
+                
+                <div class="model-translations-group">
+                    <p>Select **ONE** option below:</p>
+                    <form id="form-90">
+            
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="nllb-200-distilled-600M" required>
+                            <strong>nllb-200-distilled-600M:</strong> Ge e ba re lebelela theko ya:
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="nllb-200-1.3b" required>
+                            <strong>nllb-200-1.3b:</strong> Ge e ba re lebelela theko ya:
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="LoRA" required>
+                            <strong>LoRA:</strong> Ge re lebelela theko ya:
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="QLoRA" required>
+                            <strong>QLoRA:</strong> Ge re lebelela theko ya:
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="IA3" required>
+                            <strong>IA3:</strong> Ge e ba re lebelela theko ya:
+                        </label>
+                
+                        <label class="translation-option special-option">
+                            <input type="radio" name="selected_option" value="All of the above" required>
+                            <strong>All of the above</strong> (All model translations are equally acceptable)
+                        </label>
+                        <label class="translation-option special-option">
+                            <input type="radio" name="selected_option" value="None of the above" required>
+                            <strong>None of the above</strong> (None of the model translations are acceptable)
+                        </label>
+                    </form>
+                </div>
+                
+                <div class="segment-nav">
+                    <button onclick="prevSegment(90)" >Previous</button>
+                    <button onclick="nextSegment(90)" id="next-btn-90">Next</button>
+                </div>
+            </div>
+            
+            <div id="segment-91" class="segment-container hidden">
+                <h3>Segment 91 of 150 (Batch 5)</h3>
+                
+                <div class="source-text">
+                    <strong>English Source:</strong> For that reason, Cabinet has decided to table a legislative amendment to the Taxation Laws Amendment Act as a matter of urgency to postpone the commencement date from 1 March 2016 to 1 March 2018 to allow for further consultations with all key stakeholders.
+                </div>
+                <div class="reference-text">
+                    <strong>Reference Sepedi:</strong> Ka lebaka leo, Kabinete e tšere sephetho sa go ala phetošo ya molao go Molaophetošwa wa Melao ya Motšhelo ka tšhoganetšo go fega letšatšikgwedi la go thoma go šoma ga ona go tloga go la 1 Hlakola 2016 go fihla go la pele Matšhe 2018 go dumelela gore go be le ditherišano tše dingwe go tšwela pele le bakgathatema ka moka ba bohlokwa.
+                </div>
+                
+                <div class="model-translations-group">
+                    <p>Select **ONE** option below:</p>
+                    <form id="form-91">
+            
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="nllb-200-distilled-600M" required>
+                            <strong>nllb-200-distilled-600M:</strong> Ka baka leo, Kabinete e tšere sephetho sa go tliša phetošo ya molao go Molao wa Phetošo ya Melao ya Motšhelo bjalo ka taba ya tšhoganetšo go tloša letšatšikgwedi la go thoma go tloga ka la 1 Matšhe 2016 go ya go la 1 Matšhe 2018 go dumelela ditherišano tše di oketšegilego le bakgathatema ka moka ba bohlokwa.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="nllb-200-1.3b" required>
+                            <strong>nllb-200-1.3b:</strong> Ka lebaka leo, Kabinete e tšere sephetho sa go tliša phetošo ya molao go Molao wa Phetošo ya Melao ya Motšhelo bjalo ka taba ya tšhoganetšo go šuthiša letšatšikgwedi la go thoma go šoma go tloga ka 1 March 2016 go ya go 1 March 2018 go dumelela ditherišano tše oketšegilego le bakgathatema ka moka ba bohlokwa.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="LoRA" required>
+                            <strong>LoRA:</strong> Ka lebaka leo, Kabinete e tšere sephetho sa go tliša phetošo ya molao go Molao wa Phetošo ya Melao ya Motšhelo bjalo ka taba ya tšhoganetšo go tloša letšatšikgwedi la mathomo go tloga ka la 1 Matšhe 2016 go fihla ka la 1 Matšhe 2018 go dumelela ditherišano tše di tšwelago pele le bakgathatema ka moka ba bohlokwa.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="QLoRA" required>
+                            <strong>QLoRA:</strong> Ka lebaka leo, Kabinete e tšere sephetho sa go tliša phetošo ya molao go Molao wa Phetošo ya Melao ya Motšhelo bjalo ka taba ya tšhoganetšo go tloša letšatši la mathomo go tloga ka la 1 Matšhe 2016 go fihla ka la 1 Matšhe 2018 go dumelela ditherišano tše di tšwelago pele le bakgathatema ka moka ba bohlokwa.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="IA3" required>
+                            <strong>IA3:</strong> Ka baka leo, Kabinete e tšere sephetho sa go tliša phetošo ya molao go Molao wa Phetošo ya Melao ya Motšhelo bjalo ka taba ya tšhoganetšo go tloša letšatši la go thoma go tloga ka la 1 Matšhe 2016 go ya go la 1 Matšhe 2018 go dumelela ditherišano tše di oketšegilego le bakgathatema ka moka ba bohlokwa.
+                        </label>
+                
+                        <label class="translation-option special-option">
+                            <input type="radio" name="selected_option" value="All of the above" required>
+                            <strong>All of the above</strong> (All model translations are equally acceptable)
+                        </label>
+                        <label class="translation-option special-option">
+                            <input type="radio" name="selected_option" value="None of the above" required>
+                            <strong>None of the above</strong> (None of the model translations are acceptable)
+                        </label>
+                    </form>
+                </div>
+                
+                <div class="segment-nav">
+                    <button onclick="prevSegment(91)" >Previous</button>
+                    <button onclick="nextSegment(91)" id="next-btn-91">Next</button>
+                </div>
+            </div>
+            
+            <div id="segment-92" class="segment-container hidden">
+                <h3>Segment 92 of 150 (Batch 5)</h3>
+                
+                <div class="source-text">
+                    <strong>English Source:</strong> She made a new pot.
+                </div>
+                <div class="reference-text">
+                    <strong>Reference Sepedi:</strong> O bopile nkgo ye mpsha.
+                </div>
+                
+                <div class="model-translations-group">
+                    <p>Select **ONE** option below:</p>
+                    <form id="form-92">
+            
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="nllb-200-distilled-600M" required>
+                            <strong>nllb-200-distilled-600M:</strong> O ile a dira pitša e mpsha.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="nllb-200-1.3b" required>
+                            <strong>nllb-200-1.3b:</strong> O dirile pitša e mpsha.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="LoRA" required>
+                            <strong>LoRA:</strong> O dirile seroto se sefsa.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="QLoRA" required>
+                            <strong>QLoRA:</strong> O dirile seroto se sefsa.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="IA3" required>
+                            <strong>IA3:</strong> O ile a dira pitša e mpsha.
+                        </label>
+                
+                        <label class="translation-option special-option">
+                            <input type="radio" name="selected_option" value="All of the above" required>
+                            <strong>All of the above</strong> (All model translations are equally acceptable)
+                        </label>
+                        <label class="translation-option special-option">
+                            <input type="radio" name="selected_option" value="None of the above" required>
+                            <strong>None of the above</strong> (None of the model translations are acceptable)
+                        </label>
+                    </form>
+                </div>
+                
+                <div class="segment-nav">
+                    <button onclick="prevSegment(92)" >Previous</button>
+                    <button onclick="nextSegment(92)" id="next-btn-92">Next</button>
+                </div>
+            </div>
+            
+            <div id="segment-93" class="segment-container hidden">
+                <h3>Segment 93 of 150 (Batch 5)</h3>
+                
+                <div class="source-text">
+                    <strong>English Source:</strong> Rape by any person in police custody
+                </div>
+                <div class="reference-text">
+                    <strong>Reference Sepedi:</strong> Go katwa ke mang goba - mang a lego ka kgolegong
+                </div>
+                
+                <div class="model-translations-group">
+                    <p>Select **ONE** option below:</p>
+                    <form id="form-93">
+            
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="nllb-200-distilled-600M" required>
+                            <strong>nllb-200-distilled-600M:</strong> Go katwa ke motho le ge e le ofe yo a lego kgolegong ya maphodisa
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="nllb-200-1.3b" required>
+                            <strong>nllb-200-1.3b:</strong> Go kata ke motho le ge e le ofe yo a golegilwego ke maphodisa
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="LoRA" required>
+                            <strong>LoRA:</strong> Go katwa ke motho ofe goba ofe yo a lego kgolegong ya maphodisa
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="QLoRA" required>
+                            <strong>QLoRA:</strong> Go katwa ke motho ofe goba ofe yo a lego kgolegong ya maphodisa
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="IA3" required>
+                            <strong>IA3:</strong> Go katwa ke motho le ge e le ofe yo a lego kgolegong ya maphodisa
+                        </label>
+                
+                        <label class="translation-option special-option">
+                            <input type="radio" name="selected_option" value="All of the above" required>
+                            <strong>All of the above</strong> (All model translations are equally acceptable)
+                        </label>
+                        <label class="translation-option special-option">
+                            <input type="radio" name="selected_option" value="None of the above" required>
+                            <strong>None of the above</strong> (None of the model translations are acceptable)
+                        </label>
+                    </form>
+                </div>
+                
+                <div class="segment-nav">
+                    <button onclick="prevSegment(93)" >Previous</button>
+                    <button onclick="nextSegment(93)" id="next-btn-93">Next</button>
+                </div>
+            </div>
+            
+            <div id="segment-94" class="segment-container hidden">
+                <h3>Segment 94 of 150 (Batch 5)</h3>
+                
+                <div class="source-text">
+                    <strong>English Source:</strong> Now tell your friend what sport you like and what sport you don't like.
+                </div>
+                <div class="reference-text">
+                    <strong>Reference Sepedi:</strong> Bjale botša mogwera wa gago ka ga papadi yeo e ratago le ka ga yeo o sa e ratego.
+                </div>
+                
+                <div class="model-translations-group">
+                    <p>Select **ONE** option below:</p>
+                    <form id="form-94">
+            
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="nllb-200-distilled-600M" required>
+                            <strong>nllb-200-distilled-600M:</strong> Bjale botša mogwera wa gago gore ke dipapadi dife tšeo o di ratago le tšeo o sa di ratego.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="nllb-200-1.3b" required>
+                            <strong>nllb-200-1.3b:</strong> Bjale botša mogwera wa gago papadi yeo o e ratago le yeo o sa e ratego.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="LoRA" required>
+                            <strong>LoRA:</strong> Bjale botša mogwera wa gago gore ke dipapadi dife tšeo o di ratago le tšeo o sa di ratego.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="QLoRA" required>
+                            <strong>QLoRA:</strong> Bjale botša mogwera wa gago gore ke dipapadi dife tšeo o di ratago le tšeo o sa di ratego.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="IA3" required>
+                            <strong>IA3:</strong> Bjale botša mogwera wa gago gore ke dipapadi dife tšeo o di ratago le tšeo o sa di ratego.
+                        </label>
+                
+                        <label class="translation-option special-option">
+                            <input type="radio" name="selected_option" value="All of the above" required>
+                            <strong>All of the above</strong> (All model translations are equally acceptable)
+                        </label>
+                        <label class="translation-option special-option">
+                            <input type="radio" name="selected_option" value="None of the above" required>
+                            <strong>None of the above</strong> (None of the model translations are acceptable)
+                        </label>
+                    </form>
+                </div>
+                
+                <div class="segment-nav">
+                    <button onclick="prevSegment(94)" >Previous</button>
+                    <button onclick="nextSegment(94)" id="next-btn-94">Next</button>
+                </div>
+            </div>
+            
+            <div id="segment-95" class="segment-container hidden">
+                <h3>Segment 95 of 150 (Batch 5)</h3>
+                
+                <div class="source-text">
+                    <strong>English Source:</strong> It is the only way to counter the cost-prize squeeze and feed the ever-growing population.
+                </div>
+                <div class="reference-text">
+                    <strong>Reference Sepedi:</strong> Ke mokgwa o nnoši wo o ka thušago go lwantšha kgatelelo ya tshenyegelo-thekišo le go fepa setšhaba se se dulago se gola.
+                </div>
+                
+                <div class="model-translations-group">
+                    <p>Select **ONE** option below:</p>
+                    <form id="form-95">
+            
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="nllb-200-distilled-600M" required>
+                            <strong>nllb-200-distilled-600M:</strong> Ke yona feela tsela ya go lwantšha go gatelelwa ga ditshenyegelo le theko le go fepa badudi bao ba tšwelago pele ba gola.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="nllb-200-1.3b" required>
+                            <strong>nllb-200-1.3b:</strong> Ke yona feela tsela ya go lwantšha kgatelelo ya theko le go fepa badudi bao ba golago ka mehla.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="LoRA" required>
+                            <strong>LoRA:</strong> Ke yona fela tsela ya go lwantšha kgatelelo ya ditshenyegelo le go fepa batho bao ba tšwelago pele ba gola.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="QLoRA" required>
+                            <strong>QLoRA:</strong> Ke yona tsela e nnoši ya go lwantšha tšhitišo ya ditshenyegelo le dithekišo le go fepa batho bao ba tšwelago pele ba gola.
+                        </label>
+                
+                        <label class="translation-option">
+                            <input type="radio" name="selected_option" value="IA3" required>
+                            <strong>IA3:</strong> Ke yona feela tsela ya go lwantšha go gatelelwa ga ditshenyegelo le go fepa badudi bao ba tšwelago pele ba gola.
+                        </label>
+                
+                        <label class="translation-option special-option">
+                            <input type="radio" name="selected_option" value="All of the above" required>
+                            <strong>All of the above</strong> (All model translations are equally acceptable)
+                        </label>
+                        <label class="translation-option special-option">
+                            <input type="radio" name="selected_option" value="None of the above" required>
+                            <strong>None of the above</strong> (None of the model translations are acceptable)
+                        </label>
+                    </form>
+                </div>
+                
+                <div class="segment-nav">
+                    <button onclick="prevSegment(95)" >Previous</button>
+                    <button onclick="nextSegment(95)" id="next-btn-95">Next</button>
+                </div>
+            </div>
+            
+        <div id="segment-96" class="segment-container hidden">
+            <h2>Survey Batch Complete!</h2>
+            <p>You have finished **Batch 5** (Segments 77 to 95). Please generate and copy the results below to send back to the researcher.</p>
+            
+            <p style="font-weight: bold; color: #007BFF;">Your next file (if available) is: `survey_explicit_choice_batch_96_to_115_tsv.html`</p>
+            
+            <button onclick="compileResults()" style="background-color: #007BFF; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer;">Generate Final Results for Batch</button>
+            <div class="results-area" id="results-area">
+                <p><strong>Copy the text below:</strong></p>
+                <textarea id="results-output" style="width:100%; height: 300px;"></textarea>
+            </div>
+        </div>
+        
+        </div>
+        </body>
+        </html>
+        
